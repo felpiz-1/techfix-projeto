@@ -7,6 +7,11 @@ nome_cargo TEXT NOT NULL COLLATE NOCASE UNIQUE,
 status INTEGER NOT NULL DEFAULT 1) 
 STRICT;
 
+PRAGMA foreign_keys=1;
+
+PRAGMA foreign_keys;
+
+
 CREATE TABLE funcionario(
 id INTEGER PRIMARY KEY AUTOINCREMENT, nome_funcionario TEXT NOT NULL COLLATE NOCASE, 
 id_cargo INTEGER NOT NULL,
@@ -31,7 +36,7 @@ CREATE TABLE cliente (
 	email TEXT NOT NULL COLLATE NOCASE UNIQUE,
 	status INTEGER NOT NULL DEFAULT 1,
 	id_funcionario INTEGER NOT NULL,
-	id_funcionario_cargo INTEGER NOT NULL,
+	id_funcionario_cargo INTEGER NOT NULL CHECK (id_funcionario_cargo = 1 OR id_funcionario_cargo = 2),
 	data_cadastro TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
 	FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario(id, id_cargo)
 )STRICT;
@@ -43,11 +48,12 @@ INSERT INTO cliente (
     id_funcionario, 
     id_funcionario_cargo
 ) VALUES (
-    'Carlos Silva', 
+    'Marcos', 
     'João Pereira', 
-    'joao.pereira@email.com', 
-    1, 
-    3
+    'joao.pereira@email.com',
+    4, 
+    (SELECT id_cargo FROM funcionario WHERE id = 4)
 );
 
+ 
 
