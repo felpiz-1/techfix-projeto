@@ -1,5 +1,3 @@
---Ativa as Chaves estrangeiras do Sqlite
-PRAGMA foreign_keys;
 
 CREATE TABLE cargo(
 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -7,10 +5,9 @@ nome_cargo TEXT NOT NULL COLLATE NOCASE UNIQUE,
 status INTEGER NOT NULL DEFAULT 1) 
 STRICT;
 
-PRAGMA foreign_keys=1;
-
 PRAGMA foreign_keys;
 
+PRAGMA foreign_keys=1;
 
 CREATE TABLE funcionario(
 id INTEGER PRIMARY KEY AUTOINCREMENT, nome_funcionario TEXT NOT NULL COLLATE NOCASE, 
@@ -189,10 +186,132 @@ WHERE p.preco_venda >= 10000;
 
 SELECT * FROM vw_preco_venda_maior_100;
 
+CREATE TABLE marca (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome_marca TEXT NOT NULL COLLATE NOCASE UNIQUE,
+    status INTEGER NOT NULL DEFAULT 1,
+    data_cadastro TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
+    id_funcionario INTEGER NOT NULL,
+    id_funcionario_cargo INTEGER NOT NULL CHECK (id_funcionario_cargo = 1 OR id_funcionario_cargo = 2),
+    FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario (id, id_cargo)
+) STRICT;
+
+CREATE TABLE modelo (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome_modelo TEXT NOT NULL COLLATE NOCASE UNIQUE,
+    status INTEGER NOT NULL DEFAULT 1,
+    data_cadastro TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
+    id_funcionario INTEGER NOT NULL,
+    id_funcionario_cargo INTEGER NOT NULL CHECK (id_funcionario_cargo = 1 OR id_funcionario_cargo = 2),
+    FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario (id, id_cargo)
+) STRICT;
+
+CREATE TABLE tipo (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome_tipo TEXT NOT NULL COLLATE NOCASE UNIQUE,
+    status INTEGER NOT NULL DEFAULT 1,
+    data_cadastro TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
+    id_funcionario INTEGER NOT NULL,
+    id_funcionario_cargo INTEGER NOT NULL CHECK (id_funcionario_cargo = 1 OR id_funcionario_cargo = 2),
+    FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario (id, id_cargo)
+) STRICT;
+
+CREATE TABLE equipamento (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_cliente INTEGER NOT NULL,
+    id_marca INTEGER NOT NULL,
+    id_modelo INTEGER NOT NULL,
+    id_tipo INTEGER NOT NULL,
+    id_funcionario integer NOT NULL,
+    id_funcionario_cargo INTEGER NOT NULL CHECK (id_funcionario_cargo = 1 OR id_funcionario_cargo = 2),
+    sn TEXT COLLATE NOCASE,
+    imei TEXT COLLATE NOCASE UNIQUE,
+    status INTEGER NOT NULL DEFAULT 1,
+    data_cadastro TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
+    FOREIGN KEY (id_cliente) REFERENCES cliente (id),
+    FOREIGN KEY (id_marca) REFERENCES marca (id),
+    FOREIGN KEY (id_modelo) REFERENCES modelo (id),
+    FOREIGN KEY (id_tipo) REFERENCES tipo (id),
+    FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario (id, id_cargo)
+) STRICT;
+
+INSERT INTO marca (nome_marca, id_funcionario, id_funcionario_cargo) VALUES
+    ('Apple', 6, 1), 
+    ('Samsung', 4, 2),
+    ('Dell', 5, 2);
+
+INSERT INTO modelo (nome_modelo, id_funcionario, id_funcionario_cargo) VALUES
+    ('iPhone 15 Pro', 6, 1),  
+    ('Galaxy S24', 4, 2),     
+    ('Inspiron 15', 5, 2);
+
+INSERT INTO tipo (nome_tipo, id_funcionario, id_funcionario_cargo) VALUES
+    ('Smartphone', 6, 1),  
+    ('Notebook', 4, 2),     
+    ('Tablet', 5, 2);       
+
+INSERT INTO equipamento (
+    id_cliente, 
+    id_marca, 
+    id_modelo, 
+    id_tipo, 
+    id_funcionario, 
+    id_funcionario_cargo, 
+    sn, 
+    imei
+) VALUES 
+    (1, 1, 1, 1, 6, 1, 'SN-APP-00192', '356789101112131'), 
+    (1, 2, 2, 1, 4, 2, 'SN-SAM-88201', '356789101112132'), 
+    (1, 3, 3, 2, 5, 2, 'SN-DEL-99102', NULL);     
+
+SELECT 
+    e.id AS id_equipamento,
+    c.nome_cliente,
+    m.nome_marca,
+    mo.nome_modelo,
+    t.nome_tipo,
+    f.nome_funcionario,
+    e.sn,
+    e.imei,
+    e.data_cadastro
+FROM equipamento e
+INNER JOIN cliente c ON e.id_cliente = c.id
+INNER JOIN marca m ON e.id_marca = m.id
+INNER JOIN modelo mo ON e.id_modelo = mo.id
+INNER JOIN tipo t ON e.id_tipo = t.id
+INNER JOIN funcionario f ON e.id_funcionario = f.id;
+
+SELECT 
+    m.id,
+    m.nome_marca,
+    f.nome_funcionario AS cadastrado_por,
+    m.status,
+    m.data_cadastro
+FROM marca m
+INNER JOIN funcionario f ON m.id_funcionario = f.id;
+
+SELECT 
+    mo.id,
+    mo.nome_modelo,
+    f.nome_funcionario AS cadastrado_por,
+    mo.status,
+    mo.data_cadastro
+FROM modelo mo
+INNER JOIN funcionario f ON mo.id_funcionario = f.id;
+
+SELECT 
+    t.id,
+    t.nome_tipo,
+    f.nome_funcionario AS cadastrado_por,
+    t.status,
+    t.data_cadastro
+FROM tipo t
+INNER JOIN funcionario f ON t.id_funcionario = f.id;
 
 
 
 
 
- 
+
+
 
