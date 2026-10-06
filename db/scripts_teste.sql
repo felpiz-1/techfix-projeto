@@ -309,6 +309,81 @@ FROM tipo t
 INNER JOIN funcionario f ON t.id_funcionario = f.id;
 
 
+CREATE TABLE situacao(
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	nome_situacao TEXT NOT NULL COLLATE NOCASE UNIQUE,
+	status INTEGER NOT NULL DEFAULT 1
+) STRICT;
+
+CREATE TABLE forma_pagamento(
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	nome_forma_pagamento TEXT NOT NULL COLLATE NOCASE UNIQUE,
+	id_funcionario integer NOT NULL,
+    id_funcionario_cargo INTEGER NOT NULL CHECK (id_funcionario_cargo = 1),
+  	status INTEGER NOT NULL DEFAULT 1,
+    FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario (id, id_cargo)
+) STRICT;
+
+CREATE TABLE ordem(
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	id_funcionario INTEGER NOT NULL,
+    id_funcionario_cargo INTEGER NOT NULL CHECK (id_funcionario_cargo = 1 OR id_funcionario_cargo = 2),
+	data_abertura TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
+	data_fechamento TEXT,
+	id_situacao INTEGER NOT NULL,
+	descricao_defeito TEXT NOT NULL,
+	defeito_constatado TEXT,
+	valor_total INTEGER,
+	id_forma_pagamento INTEGER NOT NULL,
+	id_tecnico INTEGER NOT NULL,
+	id_tecnico_cargo INTEGER NOT NULL CHECK (id_tecnico_cargo = 3),
+	FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario (id, id_cargo),
+	FOREIGN KEY (id_tecnico, id_tecnico_cargo) REFERENCES funcionario (id, id_cargo),
+	FOREIGN KEY (id_situacao) REFERENCES situacao (id),
+	FOREIGN KEY (id_forma_pagamento) REFERENCES forma_pagamento (id)
+) STRICT;
+
+CREATE TABLE ordem_pecas (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	id_ordem INTEGER NOT NULL,
+	id_tecnico INTEGER NOT NULL,
+	id_tecnico_cargo INTEGER NOT NULL CHECK (id_tecnico_cargo = 3),
+	quantidade INTEGER NOT NULL,
+	valor_unitario INTEGER NOT NULL,
+	data_saida  TEXT NOT NULL DEFAULT (DATETIME('now', "localtime")
+)STRICT;
+
+INSERT INTO situacao (nome_situacao) VALUES 
+('Aberto'),
+('Em Diagnóstico'),
+('Orçamento Aprovado'),
+('Em Reparo'),
+('Pronto'),
+('Entregue'),
+('Cancelado');
+
+INSERT INTO forma_pagamento (nome_forma_pagamento, id_funcionario, id_funcionario_cargo) VALUES 
+('Dinheiro', 6, 1),
+('PIX', 6, 1),
+('Cartão de Crédito', 6, 1),
+('Cartão de Débito', 6, 1),
+('Transferência Bancária', 6, 1);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
