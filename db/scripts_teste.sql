@@ -328,30 +328,55 @@ CREATE TABLE ordem(
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	id_funcionario INTEGER NOT NULL,
     id_funcionario_cargo INTEGER NOT NULL CHECK (id_funcionario_cargo = 1 OR id_funcionario_cargo = 2),
-	data_abertura TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
-	data_fechamento TEXT,
-	id_situacao INTEGER NOT NULL,
-	descricao_defeito TEXT NOT NULL,
-	defeito_constatado TEXT,
-	valor_total INTEGER,
 	id_forma_pagamento INTEGER NOT NULL,
 	id_tecnico INTEGER NOT NULL,
 	id_tecnico_cargo INTEGER NOT NULL CHECK (id_tecnico_cargo = 3),
+	id_equipamento INTEGER NOT NULL,	
+    data_abertura TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
+	data_fechamento TEXT,
+	descricao_defeito TEXT NOT NULL,
+	defeito_constatado TEXT,
+	valor_total INTEGER,
+	FOREIGN KEY (id_equipamento) REFERENCES equipamento (id),
 	FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario (id, id_cargo),
 	FOREIGN KEY (id_tecnico, id_tecnico_cargo) REFERENCES funcionario (id, id_cargo),
-	FOREIGN KEY (id_situacao) REFERENCES situacao (id),
 	FOREIGN KEY (id_forma_pagamento) REFERENCES forma_pagamento (id)
 ) STRICT;
+
+CREATE TABLE ordem_servico (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_servico INTEGER NOT NULL,
+    id_ordem INTEGER NOT NULL,
+    valor_servico INTEGER,
+    quantidade INTEGER,
+    data_execucao TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
+    FOREIGN KEY (id_servico) REFERENCES servicos (id),
+    FOREIGN KEY (id_ordem) REFERENCES ordem (id)
+) STRICT;
+
+CREATE TABLE ordem_situacao (
+	id_ordem INTEGER NOT NULL,
+	id_nova_situacao INTEGER NOT NULL,
+	data_situacao TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
+	id_funcionario INTEGER NOT NULL,
+	FOREIGN KEY (id_ordem) REFERENCES ordem(id),
+	FOREIGN KEY (id_funcionario) REFERENCES funcionario(id),
+	FOREIGN KEY (id_nova_situacao) REFERENCES situacao(id)
+)STRICT;
 
 CREATE TABLE ordem_pecas (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	id_ordem INTEGER NOT NULL,
+	id_peca INTEGER NOT NULL,
 	id_tecnico INTEGER NOT NULL,
 	id_tecnico_cargo INTEGER NOT NULL CHECK (id_tecnico_cargo = 3),
 	quantidade INTEGER NOT NULL,
 	valor_unitario INTEGER NOT NULL,
-	data_saida  TEXT NOT NULL DEFAULT (DATETIME('now', "localtime")
-)STRICT;
+	data_saida TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
+	FOREIGN KEY (id_ordem) REFERENCES ordem (id),
+	FOREIGN KEY (id_peca) REFERENCES peca (id),
+	FOREIGN KEY (id_tecnico, id_tecnico_cargo) REFERENCES funcionario (id, id_cargo)
+) STRICT;
 
 INSERT INTO situacao (nome_situacao) VALUES 
 ('Aberto'),
@@ -362,6 +387,10 @@ INSERT INTO situacao (nome_situacao) VALUES
 ('Entregue'),
 ('Cancelado');
 
+INSERT INTO situacao (nome_situacao) VALUES 
+('Descarte por Defeito/Avaria'),
+('Uso em Reparo(OS)');
+
 INSERT INTO forma_pagamento (nome_forma_pagamento, id_funcionario, id_funcionario_cargo) VALUES 
 ('Dinheiro', 6, 1),
 ('PIX', 6, 1),
@@ -369,7 +398,31 @@ INSERT INTO forma_pagamento (nome_forma_pagamento, id_funcionario, id_funcionari
 ('Cartão de Débito', 6, 1),
 ('Transferência Bancária', 6, 1);
 
+INSERT INTO ordem (
+    id_funcionario, 
+    id_funcionario_cargo, 
+    id_forma_pagamento, 
+    id_tecnico, 
+    id_tecnico_cargo, 
+    id_equipamento, 
+    descricao_defeito, 
+    defeito_constatado, 
+    valor_total
+) VALUES 
+(4, 2, 2, 1, 3, 1, 'Aparelho sofreu queda e a tela trincou', 'Display frontal quebrado', 35000),
+(5, 2, 3, 2, 3, 2, 'Cliente relata que o aparelho não liga', 'Curto na placa principal', 45000),
+(6, 1, 1, 3, 3, 3, 'Notebook extremamente lento e travando', 'HD com bad blocks', 26000),
+(4, 2, 4, 1, 3, 1, 'Bateria descarregando muito rápido', 'Bateria com saúde abaixo de 75%', 16000),
+(5, 2, 2, 2, 3, 2, 'Não reconhece o carregador', 'Conector oxidado', 11000),
+(6, 1, 3, 3, 3, 3, 'Esquentando muito e desligando sozinho', 'Cooler obstruído', 15000);
 
+SELECT 
+    o.id AS numero_da_ordem,
+    f.nome_funcionario  AS tecnico_responsavel,
+    o.descricao_defeito,
+    o.valor_total
+FROM ordem o
+JOIN funcionario f ON o.id_tecnico = f.id;
 
 
 
