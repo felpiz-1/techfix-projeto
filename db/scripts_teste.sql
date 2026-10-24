@@ -424,7 +424,28 @@ SELECT
 FROM ordem o
 JOIN funcionario f ON o.id_tecnico = f.id;
 
+CREATE TRIGGER trg_ai_ordem_servico_atualiza_valor_total_ordem
+AFTER INSERT ON ordem_servico
+FOR EACH ROW
+BEGIN 
+	UPDATE ordem
+	SET valor_total = valor_total + (NEW.valor_servico * NEW.quantidade)
+	WHERE id = NEW.id_ordem;
+END;
 
+INSERT INTO ordem_servico (id_ordem, id_servico, valor_servico, quantidade)
+VALUES (1,6, (SELECT preco FROM servicos WHERE id=6),1);
+
+CREATE TRIGGER trg_ad_ordem_servico_atualiza_valor_total_ordem
+AFTER DELETE ON ordem_servico
+FOR EACH ROW
+BEGIN
+	UPDATE ordem
+	SET valor_total = valor_total - (OLD.valor_servico * OLD.quantidade)
+	WHERE id = OLD.id_ordem;
+END;
+
+DELETE FROM ordem_servico WHERE id = 1;
 
 
 
