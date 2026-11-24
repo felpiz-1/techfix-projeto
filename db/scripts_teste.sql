@@ -1,466 +1,521 @@
+-- TechFix — DDL oficial
+-- SQLite 3.37+ (STRICT tables)
+-- Valores monetários armazenados como inteiros em centavos.
+-- Execute em uma base vazia. Registros de catálogo devem ser criados antes dos cadastros dependentes.
 
-CREATE TABLE cargo(
-id INTEGER PRIMARY KEY AUTOINCREMENT,
-nome_cargo TEXT NOT NULL COLLATE NOCASE UNIQUE,
-status INTEGER NOT NULL DEFAULT 1) 
-STRICT;
+PRAGMA foreign_keys = ON;
 
-PRAGMA foreign_keys;
+CREATE TABLE cargo (
+    id INTEGER PRIMARY KEY,
+    nome_cargo TEXT NOT NULL COLLATE NOCASE UNIQUE,
+    status INTEGER NOT NULL DEFAULT 1 CHECK (status IN (0, 1))
+) STRICT;
 
-PRAGMA foreign_keys=1;
-
-CREATE TABLE funcionario(
-id INTEGER PRIMARY KEY AUTOINCREMENT, nome_funcionario TEXT NOT NULL COLLATE NOCASE, 
-id_cargo INTEGER NOT NULL,
-status INTEGER NOT NULL DEFAULT 1, 
-data_cadastro TEXT NOT NULL DEFAULT(DATETIME ('now', 'localtime' )), 
-FOREIGN KEY(id_cargo) REFERENCES cargo(id) ON UPDATE CASCADE ON DELETE CASCADE,
-UNIQUE (id, id_cargo)) STRICT;
-
-INSERT INTO cargo (nome_cargo) VALUES ('Gerente'), ('Atendente'), ('Técnico');
-
-INSERT INTO funcionario (nome_funcionario, id_cargo) VALUES 
-  ('Carlos Silva', 3),
-  ('Mariana Souza', 3),
-  ('Roberto Alves', 3),
-  ('Fernanda Lima', 2),
-  ('Lucas Mendes', 2),
-  ('Patricia Costa', 1);
+CREATE TABLE funcionario (
+    id INTEGER PRIMARY KEY,
+    nome_funcionario TEXT NOT NULL COLLATE NOCASE,
+    id_cargo INTEGER NOT NULL,
+    status INTEGER NOT NULL DEFAULT 1 CHECK (status IN (0, 1)),
+    data_cadastro TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (id_cargo) REFERENCES cargo(id) ON UPDATE CASCADE ON DELETE RESTRICT
+) STRICT;
 
 CREATE TABLE cliente (
-	id INTEGER PRIMARY KEY AUTOINCREMENT, nome_funcionario TEXT NOT NULL COLLATE NOCASE, 
-	nome_cliente TEXT NOT NULL COLLATE NOCASE,
-	email TEXT NOT NULL COLLATE NOCASE UNIQUE,
-	status INTEGER NOT NULL DEFAULT 1,
-	id_funcionario INTEGER NOT NULL,
-	id_funcionario_cargo INTEGER NOT NULL CHECK (id_funcionario_cargo = 1 OR id_funcionario_cargo = 2),
-	data_cadastro TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
-	FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario(id, id_cargo)
-)STRICT;
-
-INSERT INTO cliente (
-    nome_funcionario, 
-    nome_cliente, 
-    email, 
-    id_funcionario, 
-    id_funcionario_cargo
-) VALUES (
-    'Marcos', 
-    'João Pereira', 
-    'joao.pereira@email.com',
-    4, 
-    (SELECT id_cargo FROM funcionario WHERE id = 4)
-);
-
-CREATE TABLE categoria(
-id INTEGER PRIMARY KEY AUTOINCREMENT,
-nome_categoria TEXT NOT NULL COLLATE NOCASE UNIQUE,
-id_funcionario INTEGER NOT NULL,
-id_funcionario_cargo INTEGER NOT NULL CHECK (id_funcionario_cargo = 1),
-status INTEGER NOT NULL DEFAULT 1,
-data_cadastro TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
-FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario(id, id_cargo)
-)STRICT;
-
-INSERT INTO categoria (nome_categoria, id_funcionario, id_funcionario_cargo)
-VALUES 
-    ('computadores', 6, (SELECT id_cargo FROM funcionario f WHERE id = 6)),
-    ('celulares', 6, (SELECT id_cargo FROM funcionario f WHERE id = 6)),
-    ('smart tvs', 6, (SELECT id_cargo FROM funcionario f WHERE id = 6)),
-    ('redes', 6, (SELECT id_cargo FROM funcionario f WHERE id = 6)),
-    ('videogames', 6, (SELECT id_cargo FROM funcionario f WHERE id = 6)),
-    ('áudio', 6, (SELECT id_cargo FROM funcionario f WHERE id = 6)),
-    ('recuperação de dados', 6, (SELECT id_cargo FROM funcionario f WHERE id = 6)),
-    ('eletrônica avançada', 6, (SELECT id_cargo FROM funcionario f WHERE id = 6)),
-    ('informática', 6, (SELECT id_cargo FROM funcionario f WHERE id = 6)),
-    ('insumos', 6, (SELECT id_cargo FROM funcionario f WHERE id = 6)),
-    ('acessórios', 6, (SELECT id_cargo FROM funcionario f WHERE id = 6)),
-    ('telas', 6, (SELECT id_cargo FROM funcionario f WHERE id = 6)),
-    ('baterias', 6, (SELECT id_cargo FROM funcionario f WHERE id = 6)),
-    ('componentes', 6, (SELECT id_cargo FROM funcionario f WHERE id = 6)),
-    ('carcaças', 6, (SELECT id_cargo FROM funcionario f WHERE id = 6)),
-    ('tvs', 6, (SELECT id_cargo FROM funcionario f WHERE id = 6));
-
-CREATE TABLE servicos (
-id INTEGER PRIMARY KEY AUTOINCREMENT,
-nome_servico TEXT NOT NULL COLLATE NOCASE UNIQUE,
-id_categoria_servico INTEGER NOT NULL,
-preco INTEGER NOT NULL,
-horas_trabalho REAL NOT NULL,
-id_funcionario INTEGER NOT NULL,
-id_funcionario_cargo INTEGER NOT NULL CHECK (id_funcionario_cargo = 1),
-status INTEGER NOT NULL DEFAULT 1,
-data_cadastro TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
-FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario(id, id_cargo),
-FOREIGN KEY (id_categoria_servico) REFERENCES categoria(id)
+    id INTEGER PRIMARY KEY,
+    nome_cliente TEXT NOT NULL COLLATE NOCASE,
+    email TEXT NOT NULL COLLATE NOCASE UNIQUE,
+    telefone TEXT,
+    status INTEGER NOT NULL DEFAULT 1 CHECK (status IN (0, 1)),
+    data_cadastro TEXT NOT NULL DEFAULT (datetime('now')),
+    id_funcionario_cadastro INTEGER NOT NULL,
+    FOREIGN KEY (id_funcionario_cadastro) REFERENCES funcionario(id) ON DELETE RESTRICT
 ) STRICT;
-
-INSERT INTO servicos (nome_servico, id_categoria_servico, preco, horas_trabalho, id_funcionario, id_funcionario_cargo) VALUES
-('Formatação e Instalação de Sistema Operacional', 1, 12000, 2.0, 6, 1),
-('Limpeza Interna e Troca de Pasta Térmica', 1, 15000, 1.5, 6, 1),
-('Upgrade de Hardware (RAM/SSD)', 1, 8000, 1.0, 6, 1),
-('Remoção de Vírus e Malwares', 1, 10000, 1.5, 6, 1),
-('Troca de Tela de Notebook', 1, 18000, 1.5, 6, 1),
-('Troca de Display/Frontal de Celular', 2, 15000, 1.0, 6, 1),
-('Troca de Bateria de Smartphone', 2, 9000, 0.5, 6, 1),
-('Desoxidação após Contato com Líquido', 2, 20000, 3.0, 6, 1),
-('Reparo em Conector de Carga (Micro USB / Type-C)', 2, 11000, 1.5, 6, 1),
-('Troca de Barra de LED de Smart TV', 3, 35000, 3.0, 6, 1),
-('Reparo na Placa Principal de Smart TV', 3, 28000, 2.5, 6, 1),
-('Conserto de Fonte de Alimentação Interna (TV)', 3, 22000, 2.0, 6, 1),
-('Configuração de Rede e Roteador Wi-Fi', 4, 9000, 1.0, 6, 1),
-('Higienização e Troca de Metal Líquido / Pasta Térmica (Console)', 5, 22000, 2.0, 6, 1),
-('Reparo de Drift em Analógico de Controle (Joy-Con / DualSense / Xbox)', 5, 8000, 1.0, 6, 1),
-('Substituição de HDMI / Conector de Vídeo (Console)', 5, 25000, 2.5, 6, 1),
-('Troca de Bateria de Caixa de Som Portátil (Bluetooth)', 6, 12000, 1.5, 6, 1),
-('Troca de Almofadas / Reparo de Cabo de Headset Gamer', 6, 7000, 1.0, 6, 1),
-('Recuperação de Dados de HD / SSD / Pendrive Danificado', 7, 30000, 4.0, 6, 1),
-('Rebaling / Reparo de BGA em Placa Mãe ou Placa de Vídeo', 8, 45000, 5.0, 6, 1),
-('Gravação e Reprogramação de BIOS Eprom (Notebook / Desktop)', 8, 16000, 2.0, 6, 1),
-('Troca de Vidro Traseiro de Smartphone a Laser / Manual', 2, 18000, 2.5, 6, 1),
-('Reparo e Solda de Conector Jack P2/P10 de Mesa de Som ou Amplificador', 6, 9500, 1.0, 6, 1);
-
-CREATE TABLE peca (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nome_peca TEXT NOT NULL COLLATE NOCASE UNIQUE,
-    id_categoria INTEGER NOT NULL,
-    preco_compra INTEGER NOT NULL,
-    preco_venda INTEGER NOT NULL,
-    estoque_atual INTEGER NOT NULL,
-    id_funcionario INTEGER NOT NULL,
-    id_funcionario_cargo INTEGER NOT NULL CHECK (id_funcionario_cargo = 1),
-    data_cadastro TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
-    status INTEGER NOT NULL DEFAULT 1,
-    FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario (id, id_cargo),
-    FOREIGN KEY (id_categoria) REFERENCES categoria (id)
-) STRICT;
-
-INSERT INTO peca (nome_peca, id_categoria, preco_compra, preco_venda, estoque_atual, id_funcionario, id_funcionario_cargo) VALUES
-('SSD NVMe 512GB M.2', 9, 14000, 26000, 15, 6, 1),
-('SSD SATA III 480GB 2.5"', 9, 11000, 21000, 20, 6, 1),
-('Memória RAM DDR4 8GB 2666MHz (Notebook)', 9, 9000, 17000, 12, 6, 1),
-('Memória RAM DDR4 16GB 3200MHz (Desktop)', 9, 18000, 32000, 8, 6, 1),
-('Pasta Térmica de Alta Performance (Bisnaga 4g)', 10, 2500, 6000, 25, 6, 1),
-('Fonte ATX 500W 80 Plus Bronze', 9, 19000, 34000, 6, 6, 1),
-('Bateria Célula Moeda CR2032 (Cartela c/ 5)', 10, 800, 2500, 30, 6, 1),
-('Cooler para Processador Socket Universal', 9, 4500, 9500, 10, 6, 1),
-('Cabo SATA III 6Gbps 50cm', 11, 300, 1500, 50, 6, 1),
-('Tela LED 15.6" Slim 30 Pinos Full HD', 12, 28000, 48000, 5, 6, 1);
-
-INSERT INTO peca (nome_peca, id_categoria, preco_compra, preco_venda, estoque_atual, id_funcionario, id_funcionario_cargo) VALUES
-('Display Frontal Completo iPhone 11', 12, 18000, 35000, 4, 6, 1),
-('Display Frontal Completo Samsung Galaxy A54', 12, 16000, 31000, 6, 6, 1),
-('Display Frontal Completo Motorola Moto G84', 12, 14000, 28000, 5, 6, 1),
-('Bateria Compatível iPhone 11 (3110mAh)', 13, 7500, 16000, 8, 6, 1),
-('Bateria Compatível Samsung Galaxy A32', 13, 6000, 13000, 7, 6, 1),
-('Bateria Compatível Moto G30', 13, 5500, 12000, 6, 6, 1),
-('Conector de Carga Type-C Universal (Unidade)', 14, 250, 2000, 100, 6, 1),
-('Conector de Carga Micro USB V8', 14, 150, 1500, 100, 6, 1),
-('Flex de Carga e Microfone Moto G9 Play', 14, 1800, 5500, 10, 6, 1),
-('Tampa Traseira de Vidro iPhone 12', 15, 4000, 11000, 4, 6, 1),
-('Câmera Traseira Principal Redmi Note 11', 14, 6500, 14000, 3, 6, 1),
-('Alto-Falante Auricular Universal', 14, 500, 2500, 40, 6, 1),
-('Barra de LED TV Samsung 50" (Kit com 3 barras)', 16, 11000, 23000, 4, 6, 1),
-('Barra de LED TV LG 43" (Kit com 3 barras)', 16, 9500, 19500, 5, 6, 1),
-('Placa Fonte TV Samsung UN50TU8000', 16, 16000, 31000, 2, 6, 1),
-('Placa Principal TV LG 43UP7500', 16, 21000, 42000, 2, 6, 1),
-('Cabo Flat T-Con para Display TV 55"', 16, 2200, 6500, 8, 6, 1),
-('Receptor Infravermelho para Controle Remoto TV', 14, 400, 2000, 15, 6, 1),
-('Solda em Fio Sn60/Pb40 0.8mm (Carretel 500g)', 10, 8500, 15000, 3, 6, 1),
-('Álcool Isopropílico 99.8% 1 Litro', 10, 2200, 4500, 12, 6, 1),
-('Fita Kapton Térmica 10mm x 33m', 10, 1200, 3000, 15, 6, 1),
-('Fita Dupla Face Fixação de Telas (3mm x 50m)', 10, 1500, 3500, 10, 6, 1),
-('Fusível de Louça 5A 250V (Pacote c/ 10)', 14, 500, 1800, 20, 6, 1),
-('Capacitor Eletrolítico 1000uF x 25V', 14, 80, 500, 150, 6, 1);
-
-SELECT * FROM peca WHERE preco_venda >= 10000;
-
-CREATE VIEW vw_preco_venda_maior_100 AS
-SELECT 
-    id, 
-    nome_peca, 
-    preco_venda, 
-    estoque_atual 
-FROM peca p 
-WHERE p.preco_venda >= 10000;
-
-SELECT * FROM vw_preco_venda_maior_100;
 
 CREATE TABLE marca (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER PRIMARY KEY,
     nome_marca TEXT NOT NULL COLLATE NOCASE UNIQUE,
-    status INTEGER NOT NULL DEFAULT 1,
-    data_cadastro TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
-    id_funcionario INTEGER NOT NULL,
-    id_funcionario_cargo INTEGER NOT NULL CHECK (id_funcionario_cargo = 1 OR id_funcionario_cargo = 2),
-    FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario (id, id_cargo)
+    status INTEGER NOT NULL DEFAULT 1 CHECK (status IN (0, 1))
 ) STRICT;
 
 CREATE TABLE modelo (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nome_modelo TEXT NOT NULL COLLATE NOCASE UNIQUE,
-    status INTEGER NOT NULL DEFAULT 1,
-    data_cadastro TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
-    id_funcionario INTEGER NOT NULL,
-    id_funcionario_cargo INTEGER NOT NULL CHECK (id_funcionario_cargo = 1 OR id_funcionario_cargo = 2),
-    FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario (id, id_cargo)
+    id INTEGER PRIMARY KEY,
+    nome_modelo TEXT NOT NULL COLLATE NOCASE,
+    id_marca INTEGER NOT NULL,
+    status INTEGER NOT NULL DEFAULT 1 CHECK (status IN (0, 1)),
+    UNIQUE (id_marca, nome_modelo),
+    FOREIGN KEY (id_marca) REFERENCES marca(id) ON DELETE RESTRICT
 ) STRICT;
 
-CREATE TABLE tipo (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+CREATE TABLE tipo_equipamento (
+    id INTEGER PRIMARY KEY,
     nome_tipo TEXT NOT NULL COLLATE NOCASE UNIQUE,
-    status INTEGER NOT NULL DEFAULT 1,
-    data_cadastro TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
-    id_funcionario INTEGER NOT NULL,
-    id_funcionario_cargo INTEGER NOT NULL CHECK (id_funcionario_cargo = 1 OR id_funcionario_cargo = 2),
-    FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario (id, id_cargo)
+    status INTEGER NOT NULL DEFAULT 1 CHECK (status IN (0, 1))
 ) STRICT;
 
 CREATE TABLE equipamento (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER PRIMARY KEY,
     id_cliente INTEGER NOT NULL,
-    id_marca INTEGER NOT NULL,
     id_modelo INTEGER NOT NULL,
-    id_tipo INTEGER NOT NULL,
-    id_funcionario integer NOT NULL,
-    id_funcionario_cargo INTEGER NOT NULL CHECK (id_funcionario_cargo = 1 OR id_funcionario_cargo = 2),
-    sn TEXT COLLATE NOCASE,
+    id_tipo_equipamento INTEGER NOT NULL,
+    numero_serie TEXT COLLATE NOCASE UNIQUE,
     imei TEXT COLLATE NOCASE UNIQUE,
-    status INTEGER NOT NULL DEFAULT 1,
-    data_cadastro TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
-    FOREIGN KEY (id_cliente) REFERENCES cliente (id),
-    FOREIGN KEY (id_marca) REFERENCES marca (id),
-    FOREIGN KEY (id_modelo) REFERENCES modelo (id),
-    FOREIGN KEY (id_tipo) REFERENCES tipo (id),
-    FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario (id, id_cargo)
+    status INTEGER NOT NULL DEFAULT 1 CHECK (status IN (0, 1)),
+    data_cadastro TEXT NOT NULL DEFAULT (datetime('now')),
+    id_funcionario_cadastro INTEGER NOT NULL,
+    FOREIGN KEY (id_cliente) REFERENCES cliente(id) ON DELETE RESTRICT,
+    FOREIGN KEY (id_modelo) REFERENCES modelo(id) ON DELETE RESTRICT,
+    FOREIGN KEY (id_tipo_equipamento) REFERENCES tipo_equipamento(id) ON DELETE RESTRICT,
+    FOREIGN KEY (id_funcionario_cadastro) REFERENCES funcionario(id) ON DELETE RESTRICT
 ) STRICT;
 
-INSERT INTO marca (nome_marca, id_funcionario, id_funcionario_cargo) VALUES
-    ('Apple', 6, 1), 
-    ('Samsung', 4, 2),
-    ('Dell', 5, 2);
-
-INSERT INTO modelo (nome_modelo, id_funcionario, id_funcionario_cargo) VALUES
-    ('iPhone 15 Pro', 6, 1),  
-    ('Galaxy S24', 4, 2),     
-    ('Inspiron 15', 5, 2);
-
-INSERT INTO tipo (nome_tipo, id_funcionario, id_funcionario_cargo) VALUES
-    ('Smartphone', 6, 1),  
-    ('Notebook', 4, 2),     
-    ('Tablet', 5, 2);       
-
-INSERT INTO equipamento (
-    id_cliente, 
-    id_marca, 
-    id_modelo, 
-    id_tipo, 
-    id_funcionario, 
-    id_funcionario_cargo, 
-    sn, 
-    imei
-) VALUES 
-    (1, 1, 1, 1, 6, 1, 'SN-APP-00192', '356789101112131'), 
-    (1, 2, 2, 1, 4, 2, 'SN-SAM-88201', '356789101112132'), 
-    (1, 3, 3, 2, 5, 2, 'SN-DEL-99102', NULL);     
-
-SELECT 
-    e.id AS id_equipamento,
-    c.nome_cliente,
-    m.nome_marca,
-    mo.nome_modelo,
-    t.nome_tipo,
-    f.nome_funcionario,
-    e.sn,
-    e.imei,
-    e.data_cadastro
-FROM equipamento e
-INNER JOIN cliente c ON e.id_cliente = c.id
-INNER JOIN marca m ON e.id_marca = m.id
-INNER JOIN modelo mo ON e.id_modelo = mo.id
-INNER JOIN tipo t ON e.id_tipo = t.id
-INNER JOIN funcionario f ON e.id_funcionario = f.id;
-
-SELECT 
-    m.id,
-    m.nome_marca,
-    f.nome_funcionario AS cadastrado_por,
-    m.status,
-    m.data_cadastro
-FROM marca m
-INNER JOIN funcionario f ON m.id_funcionario = f.id;
-
-SELECT 
-    mo.id,
-    mo.nome_modelo,
-    f.nome_funcionario AS cadastrado_por,
-    mo.status,
-    mo.data_cadastro
-FROM modelo mo
-INNER JOIN funcionario f ON mo.id_funcionario = f.id;
-
-SELECT 
-    t.id,
-    t.nome_tipo,
-    f.nome_funcionario AS cadastrado_por,
-    t.status,
-    t.data_cadastro
-FROM tipo t
-INNER JOIN funcionario f ON t.id_funcionario = f.id;
-
-
-CREATE TABLE situacao(
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	nome_situacao TEXT NOT NULL COLLATE NOCASE UNIQUE,
-	status INTEGER NOT NULL DEFAULT 1
+CREATE TABLE categoria_servico (
+    id INTEGER PRIMARY KEY,
+    nome_categoria TEXT NOT NULL COLLATE NOCASE UNIQUE,
+    status INTEGER NOT NULL DEFAULT 1 CHECK (status IN (0, 1)),
+    data_cadastro TEXT NOT NULL DEFAULT (datetime('now')),
+    id_funcionario_cadastro INTEGER NOT NULL,
+    FOREIGN KEY (id_funcionario_cadastro) REFERENCES funcionario(id) ON DELETE RESTRICT
 ) STRICT;
 
-CREATE TABLE forma_pagamento(
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	nome_forma_pagamento TEXT NOT NULL COLLATE NOCASE UNIQUE,
-	id_funcionario integer NOT NULL,
-    id_funcionario_cargo INTEGER NOT NULL CHECK (id_funcionario_cargo = 1),
-  	status INTEGER NOT NULL DEFAULT 1,
-    FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario (id, id_cargo)
+CREATE TABLE servico (
+    id INTEGER PRIMARY KEY,
+    nome_servico TEXT NOT NULL COLLATE NOCASE UNIQUE,
+    id_categoria_servico INTEGER NOT NULL,
+    preco_base_centavos INTEGER NOT NULL CHECK (preco_base_centavos >= 0),
+    horas_trabalho REAL NOT NULL CHECK (horas_trabalho > 0),
+    status INTEGER NOT NULL DEFAULT 1 CHECK (status IN (0, 1)),
+    data_cadastro TEXT NOT NULL DEFAULT (datetime('now')),
+    id_funcionario_cadastro INTEGER NOT NULL,
+    FOREIGN KEY (id_categoria_servico) REFERENCES categoria_servico(id) ON DELETE RESTRICT,
+    FOREIGN KEY (id_funcionario_cadastro) REFERENCES funcionario(id) ON DELETE RESTRICT
 ) STRICT;
 
-CREATE TABLE ordem(
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	id_funcionario INTEGER NOT NULL,
-    id_funcionario_cargo INTEGER NOT NULL CHECK (id_funcionario_cargo = 1 OR id_funcionario_cargo = 2),
-	id_forma_pagamento INTEGER NOT NULL,
-	id_tecnico INTEGER NOT NULL,
-	id_tecnico_cargo INTEGER NOT NULL CHECK (id_tecnico_cargo = 3),
-	id_equipamento INTEGER NOT NULL,	
-    data_abertura TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
-	data_fechamento TEXT,
-	descricao_defeito TEXT NOT NULL,
-	defeito_constatado TEXT,
-	valor_total INTEGER,
-	FOREIGN KEY (id_equipamento) REFERENCES equipamento (id),
-	FOREIGN KEY (id_funcionario, id_funcionario_cargo) REFERENCES funcionario (id, id_cargo),
-	FOREIGN KEY (id_tecnico, id_tecnico_cargo) REFERENCES funcionario (id, id_cargo),
-	FOREIGN KEY (id_forma_pagamento) REFERENCES forma_pagamento (id)
+CREATE TABLE status_os (
+    id INTEGER PRIMARY KEY,
+    nome_status TEXT NOT NULL COLLATE NOCASE UNIQUE
 ) STRICT;
 
-CREATE TABLE ordem_servico (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    id_servico INTEGER NOT NULL,
+CREATE TABLE forma_pagamento (
+    id INTEGER PRIMARY KEY,
+    nome_forma_pagamento TEXT NOT NULL COLLATE NOCASE UNIQUE,
+    status INTEGER NOT NULL DEFAULT 1 CHECK (status IN (0, 1))
+) STRICT;
+
+CREATE TABLE ordem (
+    id INTEGER PRIMARY KEY,
+    id_equipamento INTEGER NOT NULL,
+    id_funcionario_abertura INTEGER NOT NULL,
+    id_tecnico INTEGER NOT NULL,
+    id_status_os INTEGER NOT NULL,
+    id_forma_pagamento INTEGER,
+    data_abertura TEXT NOT NULL DEFAULT (datetime('now')),
+    data_fechamento TEXT,
+    descricao_defeito TEXT NOT NULL,
+    defeito_constatado TEXT,
+    valor_total_centavos INTEGER NOT NULL DEFAULT 0 CHECK (valor_total_centavos >= 0),
+    CHECK ((data_fechamento IS NULL AND id_forma_pagamento IS NULL) OR
+           (data_fechamento IS NOT NULL AND id_forma_pagamento IS NOT NULL)),
+    FOREIGN KEY (id_equipamento) REFERENCES equipamento(id) ON DELETE RESTRICT,
+    FOREIGN KEY (id_funcionario_abertura) REFERENCES funcionario(id) ON DELETE RESTRICT,
+    FOREIGN KEY (id_tecnico) REFERENCES funcionario(id) ON DELETE RESTRICT,
+    FOREIGN KEY (id_status_os) REFERENCES status_os(id) ON DELETE RESTRICT,
+    FOREIGN KEY (id_forma_pagamento) REFERENCES forma_pagamento(id) ON DELETE RESTRICT
+) STRICT;
+
+CREATE TABLE historico_status_os (
+    id INTEGER PRIMARY KEY,
     id_ordem INTEGER NOT NULL,
-    valor_servico INTEGER,
-    quantidade INTEGER,
-    data_execucao TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
-    FOREIGN KEY (id_servico) REFERENCES servicos (id),
-    FOREIGN KEY (id_ordem) REFERENCES ordem (id)
+    id_status_os INTEGER NOT NULL,
+    data_hora TEXT NOT NULL DEFAULT (datetime('now')),
+    id_funcionario INTEGER NOT NULL,
+    FOREIGN KEY (id_ordem) REFERENCES ordem(id) ON DELETE RESTRICT,
+    FOREIGN KEY (id_status_os) REFERENCES status_os(id) ON DELETE RESTRICT,
+    FOREIGN KEY (id_funcionario) REFERENCES funcionario(id) ON DELETE RESTRICT
 ) STRICT;
 
-CREATE TABLE ordem_situacao (
-	id_ordem INTEGER NOT NULL,
-	id_nova_situacao INTEGER NOT NULL,
-	data_situacao TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
-	id_funcionario INTEGER NOT NULL,
-	FOREIGN KEY (id_ordem) REFERENCES ordem(id),
-	FOREIGN KEY (id_funcionario) REFERENCES funcionario(id),
-	FOREIGN KEY (id_nova_situacao) REFERENCES situacao(id)
-)STRICT;
-
-CREATE TABLE ordem_pecas (
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	id_ordem INTEGER NOT NULL,
-	id_peca INTEGER NOT NULL,
-	id_tecnico INTEGER NOT NULL,
-	id_tecnico_cargo INTEGER NOT NULL CHECK (id_tecnico_cargo = 3),
-	quantidade INTEGER NOT NULL,
-	valor_unitario INTEGER NOT NULL,
-	data_saida TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
-	FOREIGN KEY (id_ordem) REFERENCES ordem (id),
-	FOREIGN KEY (id_peca) REFERENCES peca (id),
-	FOREIGN KEY (id_tecnico, id_tecnico_cargo) REFERENCES funcionario (id, id_cargo)
+CREATE TABLE ordem_servico_item (
+    id INTEGER PRIMARY KEY,
+    id_ordem INTEGER NOT NULL,
+    id_servico INTEGER NOT NULL,
+    valor_unitario_centavos INTEGER NOT NULL CHECK (valor_unitario_centavos >= 0),
+    quantidade INTEGER NOT NULL DEFAULT 1 CHECK (quantidade > 0),
+    data_execucao TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (id_ordem, id_servico),
+    FOREIGN KEY (id_ordem) REFERENCES ordem(id) ON DELETE RESTRICT,
+    FOREIGN KEY (id_servico) REFERENCES servico(id) ON DELETE RESTRICT
 ) STRICT;
 
-INSERT INTO situacao (nome_situacao) VALUES 
-('Aberto'),
-('Em Diagnóstico'),
-('Orçamento Aprovado'),
-('Em Reparo'),
-('Pronto'),
-('Entregue'),
-('Cancelado');
+CREATE TABLE categoria_peca (
+    id INTEGER PRIMARY KEY,
+    nome_categoria TEXT NOT NULL COLLATE NOCASE UNIQUE,
+    status INTEGER NOT NULL DEFAULT 1 CHECK (status IN (0, 1)),
+    data_cadastro TEXT NOT NULL DEFAULT (datetime('now')),
+    id_funcionario_cadastro INTEGER NOT NULL,
+    FOREIGN KEY (id_funcionario_cadastro) REFERENCES funcionario(id) ON DELETE RESTRICT
+) STRICT;
 
-INSERT INTO situacao (nome_situacao) VALUES 
-('Descarte por Defeito/Avaria'),
-('Uso em Reparo(OS)');
+CREATE TABLE peca (
+    id INTEGER PRIMARY KEY,
+    nome_peca TEXT NOT NULL COLLATE NOCASE UNIQUE,
+    id_categoria_peca INTEGER NOT NULL,
+    preco_venda_centavos INTEGER NOT NULL DEFAULT 0 CHECK (preco_venda_centavos >= 0),
+    estoque_atual INTEGER NOT NULL DEFAULT 0 CHECK (estoque_atual >= 0),
+    status INTEGER NOT NULL DEFAULT 1 CHECK (status IN (0, 1)),
+    data_cadastro TEXT NOT NULL DEFAULT (datetime('now')),
+    id_funcionario_cadastro INTEGER NOT NULL,
+    FOREIGN KEY (id_categoria_peca) REFERENCES categoria_peca(id) ON DELETE RESTRICT,
+    FOREIGN KEY (id_funcionario_cadastro) REFERENCES funcionario(id) ON DELETE RESTRICT
+) STRICT;
 
-INSERT INTO forma_pagamento (nome_forma_pagamento, id_funcionario, id_funcionario_cargo) VALUES 
-('Dinheiro', 6, 1),
-('PIX', 6, 1),
-('Cartão de Crédito', 6, 1),
-('Cartão de Débito', 6, 1),
-('Transferência Bancária', 6, 1);
+CREATE TABLE lote_entrada (
+    id INTEGER PRIMARY KEY,
+    numero_lote TEXT NOT NULL COLLATE NOCASE UNIQUE,
+    data_entrada TEXT NOT NULL DEFAULT (datetime('now')),
+    id_gerente INTEGER NOT NULL,
+    FOREIGN KEY (id_gerente) REFERENCES funcionario(id) ON DELETE RESTRICT
+) STRICT;
 
-INSERT INTO ordem (
-    id_funcionario, 
-    id_funcionario_cargo, 
-    id_forma_pagamento, 
-    id_tecnico, 
-    id_tecnico_cargo, 
-    id_equipamento, 
-    descricao_defeito, 
-    defeito_constatado, 
-    valor_total
-) VALUES 
-(4, 2, 2, 1, 3, 1, 'Aparelho sofreu queda e a tela trincou', 'Display frontal quebrado', 35000),
-(5, 2, 3, 2, 3, 2, 'Cliente relata que o aparelho não liga', 'Curto na placa principal', 45000),
-(6, 1, 1, 3, 3, 3, 'Notebook extremamente lento e travando', 'HD com bad blocks', 26000),
-(4, 2, 4, 1, 3, 1, 'Bateria descarregando muito rápido', 'Bateria com saúde abaixo de 75%', 16000),
-(5, 2, 2, 2, 3, 2, 'Não reconhece o carregador', 'Conector oxidado', 11000),
-(6, 1, 3, 3, 3, 3, 'Esquentando muito e desligando sozinho', 'Cooler obstruído', 15000);
+CREATE TABLE lote_entrada_item (
+    id INTEGER PRIMARY KEY,
+    id_lote_entrada INTEGER NOT NULL,
+    id_peca INTEGER NOT NULL,
+    quantidade INTEGER NOT NULL CHECK (quantidade > 0),
+    custo_unitario_centavos INTEGER NOT NULL CHECK (custo_unitario_centavos >= 0),
+    preco_sugerido_centavos INTEGER NOT NULL CHECK (preco_sugerido_centavos >= 0),
+    UNIQUE (id_lote_entrada, id_peca),
+    FOREIGN KEY (id_lote_entrada) REFERENCES lote_entrada(id) ON DELETE RESTRICT,
+    FOREIGN KEY (id_peca) REFERENCES peca(id) ON DELETE RESTRICT
+) STRICT;
 
-SELECT 
-    o.id AS numero_da_ordem,
-    f.nome_funcionario  AS tecnico_responsavel,
-    o.descricao_defeito,
-    o.valor_total
-FROM ordem o
-JOIN funcionario f ON o.id_tecnico = f.id;
+CREATE TABLE ordem_peca (
+    id INTEGER PRIMARY KEY,
+    id_ordem INTEGER NOT NULL,
+    id_peca INTEGER NOT NULL,
+    id_tecnico INTEGER NOT NULL,
+    quantidade INTEGER NOT NULL CHECK (quantidade > 0),
+    valor_unitario_centavos INTEGER NOT NULL CHECK (valor_unitario_centavos >= 0),
+    data_saida TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (id_ordem) REFERENCES ordem(id) ON DELETE RESTRICT,
+    FOREIGN KEY (id_peca) REFERENCES peca(id) ON DELETE RESTRICT,
+    FOREIGN KEY (id_tecnico) REFERENCES funcionario(id) ON DELETE RESTRICT
+) STRICT;
 
-CREATE TRIGGER trg_ai_ordem_servico_atualiza_valor_total_ordem
-AFTER INSERT ON ordem_servico
-FOR EACH ROW
-BEGIN 
-	UPDATE ordem
-	SET valor_total = valor_total + (NEW.valor_servico * NEW.quantidade)
-	WHERE id = NEW.id_ordem;
-END;
+CREATE TABLE saida_peca (
+    id INTEGER PRIMARY KEY,
+    id_peca INTEGER NOT NULL,
+    id_tecnico INTEGER NOT NULL,
+    quantidade INTEGER NOT NULL CHECK (quantidade > 0),
+    valor_referencia_centavos INTEGER NOT NULL CHECK (valor_referencia_centavos >= 0),
+    data_saida TEXT NOT NULL DEFAULT (datetime('now')),
+    motivo TEXT NOT NULL DEFAULT 'Descarte por defeito/avaria'
+        CHECK (motivo = 'Descarte por defeito/avaria'),
+    observacao TEXT,
+    FOREIGN KEY (id_peca) REFERENCES peca(id) ON DELETE RESTRICT,
+    FOREIGN KEY (id_tecnico) REFERENCES funcionario(id) ON DELETE RESTRICT
+) STRICT;
 
-INSERT INTO ordem_servico (id_ordem, id_servico, valor_servico, quantidade)
-VALUES (1,6, (SELECT preco FROM servicos WHERE id=6),1);
+CREATE INDEX idx_equipamento_cliente ON equipamento(id_cliente);
+CREATE INDEX idx_ordem_equipamento ON ordem(id_equipamento);
+CREATE INDEX idx_ordem_tecnico ON ordem(id_tecnico);
+CREATE INDEX idx_historico_status_ordem ON historico_status_os(id_ordem, data_hora);
+CREATE INDEX idx_ordem_item_ordem ON ordem_servico_item(id_ordem);
+CREATE INDEX idx_ordem_peca_ordem ON ordem_peca(id_ordem);
+CREATE INDEX idx_movimento_peca ON lote_entrada_item(id_peca);
 
-CREATE TRIGGER trg_ad_ordem_servico_atualiza_valor_total_ordem
-AFTER DELETE ON ordem_servico
-FOR EACH ROW
+-- Dados fixos de domínio. IDs explícitos deixam a carga reproduzível, sem usá-los
+-- como regra de autorização; as triggers consultam o nome do cargo/status.
+INSERT INTO cargo (id, nome_cargo) VALUES
+    (1, 'Gerente'), (2, 'Atendente'), (3, 'Técnico');
+
+INSERT INTO status_os (id, nome_status) VALUES
+    (1, 'Aberto'), (2, 'Em Diagnóstico'), (3, 'Orçamento Aprovado'),
+    (4, 'Em Reparo'), (5, 'Pronto'), (6, 'Entregue'), (7, 'Cancelado');
+
+INSERT INTO forma_pagamento (id, nome_forma_pagamento) VALUES
+    (1, 'Dinheiro'), (2, 'PIX'), (3, 'Cartão de Crédito'),
+    (4, 'Cartão de Débito'), (5, 'Transferência Bancária');
+
+-- Valida papéis sem depender de IDs de cargo fixos.
+CREATE TRIGGER trg_cliente_cadastro_papel
+BEFORE INSERT ON cliente
+WHEN NOT EXISTS (
+    SELECT 1 FROM funcionario f JOIN cargo c ON c.id = f.id_cargo
+    WHERE f.id = NEW.id_funcionario_cadastro
+      AND c.nome_cargo IN ('Atendente', 'Gerente') AND f.status = 1
+)
+BEGIN SELECT RAISE(ABORT, 'Cadastro de cliente exige atendente ou gerente ativo'); END;
+
+CREATE TRIGGER trg_equipamento_cadastro_papel
+BEFORE INSERT ON equipamento
+WHEN NOT EXISTS (
+    SELECT 1 FROM funcionario f JOIN cargo c ON c.id = f.id_cargo
+    WHERE f.id = NEW.id_funcionario_cadastro
+      AND c.nome_cargo IN ('Atendente', 'Gerente') AND f.status = 1
+)
+BEGIN SELECT RAISE(ABORT, 'Cadastro de equipamento exige atendente ou gerente ativo'); END;
+
+CREATE TRIGGER trg_categoria_servico_cadastro_gerente
+BEFORE INSERT ON categoria_servico
+WHEN NOT EXISTS (
+    SELECT 1 FROM funcionario f JOIN cargo c ON c.id = f.id_cargo
+    WHERE f.id = NEW.id_funcionario_cadastro AND c.nome_cargo = 'Gerente' AND f.status = 1
+)
+BEGIN SELECT RAISE(ABORT, 'Categoria de serviço exige gerente ativo'); END;
+
+CREATE TRIGGER trg_servico_cadastro_gerente
+BEFORE INSERT ON servico
+WHEN NOT EXISTS (
+    SELECT 1 FROM funcionario f JOIN cargo c ON c.id = f.id_cargo
+    WHERE f.id = NEW.id_funcionario_cadastro AND c.nome_cargo = 'Gerente' AND f.status = 1
+)
+BEGIN SELECT RAISE(ABORT, 'Cadastro de serviço exige gerente ativo'); END;
+
+CREATE TRIGGER trg_categoria_peca_cadastro_gerente
+BEFORE INSERT ON categoria_peca
+WHEN NOT EXISTS (
+    SELECT 1 FROM funcionario f JOIN cargo c ON c.id = f.id_cargo
+    WHERE f.id = NEW.id_funcionario_cadastro AND c.nome_cargo = 'Gerente' AND f.status = 1
+)
+BEGIN SELECT RAISE(ABORT, 'Categoria de peça exige gerente ativo'); END;
+
+CREATE TRIGGER trg_peca_cadastro_gerente
+BEFORE INSERT ON peca
+WHEN NOT EXISTS (
+    SELECT 1 FROM funcionario f JOIN cargo c ON c.id = f.id_cargo
+    WHERE f.id = NEW.id_funcionario_cadastro AND c.nome_cargo = 'Gerente' AND f.status = 1
+)
+BEGIN SELECT RAISE(ABORT, 'Cadastro de peça exige gerente ativo'); END;
+
+CREATE TRIGGER trg_lote_entrada_gerente
+BEFORE INSERT ON lote_entrada
+WHEN NOT EXISTS (
+    SELECT 1 FROM funcionario f JOIN cargo c ON c.id = f.id_cargo
+    WHERE f.id = NEW.id_gerente AND c.nome_cargo = 'Gerente' AND f.status = 1
+)
+BEGIN SELECT RAISE(ABORT, 'Entrada de peças exige gerente ativo'); END;
+
+CREATE TRIGGER trg_ordem_papeis
+BEFORE INSERT ON ordem
+WHEN NOT EXISTS (
+    SELECT 1 FROM funcionario f JOIN cargo c ON c.id = f.id_cargo
+    WHERE f.id = NEW.id_funcionario_abertura
+      AND c.nome_cargo IN ('Atendente', 'Gerente') AND f.status = 1
+) OR NOT EXISTS (
+    SELECT 1 FROM funcionario f JOIN cargo c ON c.id = f.id_cargo
+    WHERE f.id = NEW.id_tecnico AND c.nome_cargo = 'Técnico' AND f.status = 1
+) OR NOT EXISTS (
+    SELECT 1 FROM status_os s WHERE s.id = NEW.id_status_os AND s.nome_status = 'Aberto'
+)
+BEGIN SELECT RAISE(ABORT, 'OS exige abertura por atendente/gerente, técnico ativo e status Aberto'); END;
+
+CREATE TRIGGER trg_historico_status_responsavel
+BEFORE INSERT ON historico_status_os
+WHEN NOT EXISTS (
+    SELECT 1 FROM funcionario f JOIN cargo c ON c.id = f.id_cargo
+    WHERE f.id = NEW.id_funcionario AND f.status = 1
+      AND c.nome_cargo IN ('Técnico', 'Atendente', 'Gerente')
+)
+BEGIN SELECT RAISE(ABORT, 'Mudança de status exige técnico, atendente ou gerente ativo'); END;
+
+CREATE TRIGGER trg_ordem_registra_status_inicial
+AFTER INSERT ON ordem
 BEGIN
-	UPDATE ordem
-	SET valor_total = valor_total - (OLD.valor_servico * OLD.quantidade)
-	WHERE id = OLD.id_ordem;
+    INSERT INTO historico_status_os (id_ordem, id_status_os, id_funcionario)
+    VALUES (NEW.id, NEW.id_status_os, NEW.id_funcionario_abertura);
 END;
 
-DELETE FROM ordem_servico WHERE id = 1;
+CREATE TRIGGER trg_historico_atualiza_status_ordem
+AFTER INSERT ON historico_status_os
+BEGIN
+    UPDATE ordem SET id_status_os = NEW.id_status_os WHERE id = NEW.id_ordem;
+END;
 
+CREATE TRIGGER trg_ordem_status_somente_historico
+BEFORE UPDATE OF id_status_os ON ordem
+WHEN NEW.id_status_os <> OLD.id_status_os
+ AND NEW.id_status_os <> COALESCE(
+    (SELECT h.id_status_os FROM historico_status_os h
+     WHERE h.id_ordem = OLD.id ORDER BY h.data_hora DESC, h.id DESC LIMIT 1),
+    OLD.id_status_os
+ )
+BEGIN SELECT RAISE(ABORT, 'Altere status inserindo registro no historico_status_os'); END;
 
+CREATE TRIGGER trg_ordem_total_coerente
+BEFORE UPDATE OF valor_total_centavos ON ordem
+WHEN NEW.valor_total_centavos <>
+    COALESCE((SELECT SUM(i.quantidade * i.valor_unitario_centavos)
+              FROM ordem_servico_item i WHERE i.id_ordem = OLD.id), 0) +
+    COALESCE((SELECT SUM(p.quantidade * p.valor_unitario_centavos)
+              FROM ordem_peca p WHERE p.id_ordem = OLD.id), 0)
+BEGIN SELECT RAISE(ABORT, 'Total da OS deve corresponder aos itens registrados'); END;
 
+CREATE TRIGGER trg_lote_item_atualiza_estoque
+AFTER INSERT ON lote_entrada_item
+BEGIN
+    UPDATE peca
+       SET estoque_atual = estoque_atual + NEW.quantidade,
+           preco_venda_centavos = NEW.preco_sugerido_centavos
+     WHERE id = NEW.id_peca;
+END;
 
+CREATE TRIGGER trg_lote_item_sem_edicao
+BEFORE UPDATE ON lote_entrada_item
+BEGIN SELECT RAISE(ABORT, 'Itens de lote registrados são imutáveis'); END;
 
+CREATE TRIGGER trg_lote_item_sem_exclusao
+BEFORE DELETE ON lote_entrada_item
+BEGIN SELECT RAISE(ABORT, 'Itens de lote registrados são imutáveis'); END;
 
+-- Serviço congelado na OS e total atualizado em inserção, alteração ou remoção.
+CREATE TRIGGER trg_ordem_servico_item_aberta_insert
+BEFORE INSERT ON ordem_servico_item
+WHEN EXISTS (SELECT 1 FROM ordem o WHERE o.id = NEW.id_ordem AND o.data_fechamento IS NOT NULL)
+BEGIN SELECT RAISE(ABORT, 'OS fechada não aceita novos serviços'); END;
 
+CREATE TRIGGER trg_ordem_servico_item_total_insert
+AFTER INSERT ON ordem_servico_item
+BEGIN
+    UPDATE ordem SET valor_total_centavos =
+        COALESCE((SELECT SUM(i.quantidade * i.valor_unitario_centavos)
+                  FROM ordem_servico_item i WHERE i.id_ordem = NEW.id_ordem), 0) +
+        COALESCE((SELECT SUM(p.quantidade * p.valor_unitario_centavos)
+                  FROM ordem_peca p WHERE p.id_ordem = NEW.id_ordem), 0)
+    WHERE id = NEW.id_ordem;
+END;
 
+CREATE TRIGGER trg_ordem_servico_item_aberta_update
+BEFORE UPDATE ON ordem_servico_item
+WHEN EXISTS (SELECT 1 FROM ordem o WHERE o.id = OLD.id_ordem AND o.data_fechamento IS NOT NULL)
+  OR EXISTS (SELECT 1 FROM ordem o WHERE o.id = NEW.id_ordem AND o.data_fechamento IS NOT NULL)
+BEGIN SELECT RAISE(ABORT, 'OS fechada não aceita alteração de serviços'); END;
 
+CREATE TRIGGER trg_ordem_servico_item_total_update
+AFTER UPDATE ON ordem_servico_item
+BEGIN
+    UPDATE ordem SET valor_total_centavos =
+        COALESCE((SELECT SUM(i.quantidade * i.valor_unitario_centavos)
+                  FROM ordem_servico_item i WHERE i.id_ordem = OLD.id_ordem), 0) +
+        COALESCE((SELECT SUM(p.quantidade * p.valor_unitario_centavos)
+                  FROM ordem_peca p WHERE p.id_ordem = OLD.id_ordem), 0)
+    WHERE id = OLD.id_ordem;
+    UPDATE ordem SET valor_total_centavos =
+        COALESCE((SELECT SUM(i.quantidade * i.valor_unitario_centavos)
+                  FROM ordem_servico_item i WHERE i.id_ordem = NEW.id_ordem), 0) +
+        COALESCE((SELECT SUM(p.quantidade * p.valor_unitario_centavos)
+                  FROM ordem_peca p WHERE p.id_ordem = NEW.id_ordem), 0)
+    WHERE id = NEW.id_ordem AND NEW.id_ordem <> OLD.id_ordem;
+END;
 
+CREATE TRIGGER trg_ordem_servico_item_aberta_delete
+BEFORE DELETE ON ordem_servico_item
+WHEN EXISTS (SELECT 1 FROM ordem o WHERE o.id = OLD.id_ordem AND o.data_fechamento IS NOT NULL)
+BEGIN SELECT RAISE(ABORT, 'OS fechada não aceita remoção de serviços'); END;
 
+CREATE TRIGGER trg_ordem_servico_item_total_delete
+AFTER DELETE ON ordem_servico_item
+BEGIN
+    UPDATE ordem SET valor_total_centavos =
+        COALESCE((SELECT SUM(i.quantidade * i.valor_unitario_centavos)
+                  FROM ordem_servico_item i WHERE i.id_ordem = OLD.id_ordem), 0) +
+        COALESCE((SELECT SUM(p.quantidade * p.valor_unitario_centavos)
+                  FROM ordem_peca p WHERE p.id_ordem = OLD.id_ordem), 0)
+    WHERE id = OLD.id_ordem;
+END;
 
+-- Uso de peças em OS: somente status aprovado/em reparo, técnico designado e saldo suficiente.
+CREATE TRIGGER trg_ordem_peca_validacao_insert
+BEFORE INSERT ON ordem_peca
+WHEN NOT EXISTS (
+    SELECT 1 FROM ordem o JOIN status_os s ON s.id = o.id_status_os
+    JOIN funcionario f ON f.id = NEW.id_tecnico JOIN cargo c ON c.id = f.id_cargo
+    WHERE o.id = NEW.id_ordem AND s.nome_status IN ('Orçamento Aprovado', 'Em Reparo')
+      AND o.id_tecnico = NEW.id_tecnico AND c.nome_cargo = 'Técnico' AND f.status = 1
+) OR NOT EXISTS (
+    SELECT 1 FROM peca p WHERE p.id = NEW.id_peca AND p.estoque_atual >= NEW.quantidade
+) OR EXISTS (
+    SELECT 1 FROM ordem o WHERE o.id = NEW.id_ordem AND o.data_fechamento IS NOT NULL
+)
+BEGIN SELECT RAISE(ABORT, 'Uso de peça exige OS elegível, técnico designado e estoque suficiente'); END;
 
+CREATE TRIGGER trg_ordem_peca_baixa_insert
+AFTER INSERT ON ordem_peca
+BEGIN
+    UPDATE peca SET estoque_atual = estoque_atual - NEW.quantidade WHERE id = NEW.id_peca;
+    UPDATE ordem SET valor_total_centavos =
+        COALESCE((SELECT SUM(i.quantidade * i.valor_unitario_centavos)
+                  FROM ordem_servico_item i WHERE i.id_ordem = NEW.id_ordem), 0) +
+        COALESCE((SELECT SUM(p.quantidade * p.valor_unitario_centavos)
+                  FROM ordem_peca p WHERE p.id_ordem = NEW.id_ordem), 0)
+    WHERE id = NEW.id_ordem;
+END;
 
+CREATE TRIGGER trg_ordem_peca_validacao_update
+BEFORE UPDATE ON ordem_peca
+WHEN EXISTS (SELECT 1 FROM ordem o WHERE o.id = OLD.id_ordem AND o.data_fechamento IS NOT NULL)
+ OR EXISTS (SELECT 1 FROM ordem o WHERE o.id = NEW.id_ordem AND o.data_fechamento IS NOT NULL)
+ OR NOT EXISTS (
+    SELECT 1 FROM ordem o JOIN status_os s ON s.id = o.id_status_os
+    JOIN funcionario f ON f.id = NEW.id_tecnico JOIN cargo c ON c.id = f.id_cargo
+    WHERE o.id = NEW.id_ordem AND s.nome_status IN ('Orçamento Aprovado', 'Em Reparo')
+      AND o.id_tecnico = NEW.id_tecnico AND c.nome_cargo = 'Técnico' AND f.status = 1
+ )
+ OR NOT EXISTS (
+    SELECT 1 FROM peca p WHERE p.id = NEW.id_peca AND
+      p.estoque_atual + CASE WHEN NEW.id_peca = OLD.id_peca THEN OLD.quantidade ELSE 0 END >= NEW.quantidade
+ )
+BEGIN SELECT RAISE(ABORT, 'Alteração de peça inválida para OS, técnico ou estoque'); END;
 
+CREATE TRIGGER trg_ordem_peca_baixa_update
+AFTER UPDATE ON ordem_peca
+BEGIN
+    UPDATE peca SET estoque_atual = estoque_atual + OLD.quantidade WHERE id = OLD.id_peca;
+    UPDATE peca SET estoque_atual = estoque_atual - NEW.quantidade WHERE id = NEW.id_peca;
+    UPDATE ordem SET valor_total_centavos =
+        COALESCE((SELECT SUM(i.quantidade * i.valor_unitario_centavos)
+                  FROM ordem_servico_item i WHERE i.id_ordem = OLD.id_ordem), 0) +
+        COALESCE((SELECT SUM(p.quantidade * p.valor_unitario_centavos)
+                  FROM ordem_peca p WHERE p.id_ordem = OLD.id_ordem), 0)
+    WHERE id = OLD.id_ordem;
+    UPDATE ordem SET valor_total_centavos =
+        COALESCE((SELECT SUM(i.quantidade * i.valor_unitario_centavos)
+                  FROM ordem_servico_item i WHERE i.id_ordem = NEW.id_ordem), 0) +
+        COALESCE((SELECT SUM(p.quantidade * p.valor_unitario_centavos)
+                  FROM ordem_peca p WHERE p.id_ordem = NEW.id_ordem), 0)
+    WHERE id = NEW.id_ordem AND NEW.id_ordem <> OLD.id_ordem;
+END;
 
+CREATE TRIGGER trg_ordem_peca_baixa_delete
+AFTER DELETE ON ordem_peca
+BEGIN
+    UPDATE peca SET estoque_atual = estoque_atual + OLD.quantidade WHERE id = OLD.id_peca;
+    UPDATE ordem SET valor_total_centavos =
+        COALESCE((SELECT SUM(i.quantidade * i.valor_unitario_centavos)
+                  FROM ordem_servico_item i WHERE i.id_ordem = OLD.id_ordem), 0) +
+        COALESCE((SELECT SUM(p.quantidade * p.valor_unitario_centavos)
+                  FROM ordem_peca p WHERE p.id_ordem = OLD.id_ordem), 0)
+    WHERE id = OLD.id_ordem;
+END;
 
+CREATE TRIGGER trg_saida_peca_validacao
+BEFORE INSERT ON saida_peca
+WHEN NOT EXISTS (
+    SELECT 1 FROM peca p WHERE p.id = NEW.id_peca AND p.estoque_atual >= NEW.quantidade
+) OR NOT EXISTS (
+    SELECT 1 FROM funcionario f JOIN cargo c ON c.id = f.id_cargo
+    WHERE f.id = NEW.id_tecnico AND c.nome_cargo = 'Técnico' AND f.status = 1
+)
+BEGIN SELECT RAISE(ABORT, 'Descarte exige técnico ativo e estoque suficiente'); END;
 
+CREATE TRIGGER trg_saida_peca_baixa
+AFTER INSERT ON saida_peca
+BEGIN
+    UPDATE peca SET estoque_atual = estoque_atual - NEW.quantidade WHERE id = NEW.id_peca;
+END;
+
+CREATE TRIGGER trg_saida_peca_sem_edicao
+BEFORE UPDATE ON saida_peca
+BEGIN SELECT RAISE(ABORT, 'Saída registrada é imutável; faça ajuste auditado'); END;
+
+CREATE TRIGGER trg_saida_peca_sem_exclusao
+BEFORE DELETE ON saida_peca
+BEGIN SELECT RAISE(ABORT, 'Saída registrada é imutável; faça ajuste auditado'); END;
