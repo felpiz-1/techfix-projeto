@@ -1,7 +1,4 @@
--- TechFix — DDL oficial
--- SQLite 3.37+ (STRICT tables)
--- Valores monetários armazenados como inteiros em centavos.
--- Execute em uma base vazia. Registros de catálogo devem ser criados antes dos cadastros dependentes.
+
 
 PRAGMA foreign_keys = ON;
 
